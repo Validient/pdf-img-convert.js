@@ -22,49 +22,68 @@ SOFTWARE.
 
 */
 
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-const isURL = require('is-url');
-const pdfjs = require('pdfjs-dist/legacy/build/pdf.js');
-const Canvas = require('canvas');
-const assert = require('assert').strict;
-const fs = require('fs');
-const util = require('util');
-const path = require('path');
+import isURL from 'is-url';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { Canvas, createCanvas } from 'canvas';
+import * as fs from 'fs';
+import * as util from 'util';
+import * as path from 'path';
+import assert from 'assert';
 
 const readFile = util.promisify(fs.readFile);
 
-function NodeCanvasFactory() {}
-NodeCanvasFactory.prototype = {
-  create: function NodeCanvasFactory_create(width, height) {
+interface CanvasAndContext {
+  canvas: Canvas;
+  context: CanvasRenderingContext2D;
+}
+
+interface IConversionConfig {
+  /** Number in px */
+  width?: number;
+  /** Number in px */
+  height?: number;
+  /** A list of pages to render instead of all of them */
+  page_numbers?: number[];
+  /** Output as base64 */
+  base64?: boolean;
+  /** Viewport scale as ratio */
+  scale?: number;
+  /** Controls the `isEvalSupported` parameter of `pdf-js`. Defaults to `true`. */
+  isEvalSupported?: boolean;
+}
+
+class NodeCanvasFactory {
+  // NodeCanvasFactory.prototype = {
+  create(width: number, height: number) {
     assert(width > 0 && height > 0, 'Invalid canvas size');
-    var canvas = Canvas.createCanvas(width, height);
-    var context = canvas.getContext('2d');
+    let canvas = createCanvas(width, height);
+    let context = canvas.getContext('2d');
     return {
       canvas: canvas,
       context: context,
     };
-  },
+  }
 
-  reset: function NodeCanvasFactory_reset(canvasAndContext, width, height) {
+  reset(canvasAndContext: CanvasAndContext, width: number, height: number) {
     assert(canvasAndContext.canvas, 'Canvas is not specified');
     assert(width > 0 && height > 0, 'Invalid canvas size');
     canvasAndContext.canvas.width = width;
     canvasAndContext.canvas.height = height;
-  },
+  }
 
-  destroy: function NodeCanvasFactory_destroy(canvasAndContext) {
+  destroy(canvasAndContext: CanvasAndContext) {
     assert(canvasAndContext.canvas, 'Canvas is not specified');
 
     // Zeroing the width and height cause Firefox to release graphics
     // resources immediately, which can greatly reduce memory consumption.
     canvasAndContext.canvas.width = 0;
     canvasAndContext.canvas.height = 0;
-    canvasAndContext.canvas = null;
-    canvasAndContext.context = null;
-  },
-};
+    canvasAndContext.canvas = null!;
+    canvasAndContext.context = null!;
+  }
+}
 
-module.exports.convert = async function (pdf, conversion_config = {}) {
+export async function convert(pdf: string | Buffer | Uint8Array, conversion_config?: IConversionConfig) {
   // Get the PDF in Uint8Array form
 
   let pdfData = pdf;
@@ -89,33 +108,36 @@ module.exports.convert = async function (pdf, conversion_config = {}) {
     pdfData = new Uint8Array(pdf);
   }
   // Support for Uint8Array input
-  else if (!pdf instanceof Uint8Array) {
+  else if ((!pdf as any) instanceof Uint8Array) {
     return pdf;
   }
 
   // At this point, we want to convert the pdf data into a 2D array representing
   // the images (indexed like array[page][pixel])
 
-  var packagePath = path.dirname(require.resolve('pdfjs-dist/package.json'));
+  let packagePath = path.dirname(import.meta.resolve('pdfjs-dist/package.json'));
 
-  var outputPages = [];
-  var loadingTask = pdfjs.getDocument({
+  let outputPages: Array<Uint8Array | string> = [];
+  let loadingTask = pdfjs.getDocument({
     data: pdfData,
     disableFontFace: true,
     verbosity: 0,
     standardFontDataUrl: packagePath + '/standard_fonts/',
-    isEvalSupported: conversion_config.isEvalSupported,
+    isEvalSupported: conversion_config?.isEvalSupported || false,
   });
 
-  var pdfDocument = await loadingTask.promise;
+  let pdfDocument = await loadingTask.promise;
 
-  var canvasFactory = new NodeCanvasFactory();
+  let canvasFactory = new NodeCanvasFactory();
 
-  if (conversion_config.height <= 0 || conversion_config.width <= 0)
+  if (
+    conversion_config &&
+    ((conversion_config.height && conversion_config.height <= 0) || (conversion_config.width && conversion_config.width <= 0))
+  )
     console.error('Negative viewport dimension given. Defaulting to 100% scale.');
 
   // If there are page numbers supplied in the conversion config
-  if (conversion_config.page_numbers)
+  if (conversion_config && conversion_config.page_numbers)
     for (let i = 0; i < conversion_config.page_numbers.length; i++) {
       // This just pushes a render of the page to the array
       let currentPage = await doc_render(pdfDocument, conversion_config.page_numbers[i], canvasFactory, conversion_config);
@@ -131,15 +153,20 @@ module.exports.convert = async function (pdf, conversion_config = {}) {
       let currentPage = await doc_render(pdfDocument, i, canvasFactory, conversion_config);
       if (currentPage != null) {
         // This allows for base64 conversion of output images
-        if (conversion_config.base64) outputPages.push(currentPage.toString('base64'));
+        if (conversion_config?.base64) outputPages.push(currentPage.toString('base64'));
         else outputPages.push(new Uint8Array(currentPage));
       }
     }
 
   return outputPages;
-}; // convert method
+} // convert method
 
-async function doc_render(pdfDocument, pageNo, canvasFactory, conversion_config) {
+async function doc_render(
+  pdfDocument: pdfjs.PDFDocumentProxy,
+  pageNo: number,
+  canvasFactory: NodeCanvasFactory,
+  conversion_config?: IConversionConfig
+) {
   // Page number sanity check
   if (pageNo < 1 || pageNo > pdfDocument.numPages) {
     console.error('Invalid page number ' + pageNo);
@@ -155,19 +182,19 @@ async function doc_render(pdfDocument, pageNo, canvasFactory, conversion_config)
   let page = await pdfDocument.getPage(pageNo);
 
   // Create a viewport at 100% scale
-  let outputScale = conversion_config.scale || 1.0;
+  let outputScale = conversion_config?.scale || 1.0;
   let viewport = page.getViewport({ scale: outputScale });
 
   // Scale it up / down dependent on the sizes given in the config (if there
   // are any)
-  if (conversion_config.width) outputScale = conversion_config.width / viewport.width;
-  else if (conversion_config.height) outputScale = conversion_config.height / viewport.height;
+  if (conversion_config?.width) outputScale = conversion_config.width / viewport.width;
+  else if (conversion_config?.height) outputScale = conversion_config.height / viewport.height;
   if (outputScale != 1 && outputScale > 0) viewport = page.getViewport({ scale: outputScale });
 
   let canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
   let renderContext = {
-    canvasContext: canvasAndContext.context,
+    canvasContext: canvasAndContext.context as unknown as CanvasRenderingContext2D,
     viewport: viewport,
     canvasFactory: canvasFactory,
   };

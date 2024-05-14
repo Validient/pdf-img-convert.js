@@ -1,9 +1,9 @@
 {
   "name": "pdf-img-convert",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "A simple module to convert PDF files into image buffers (without filesystem usage)",
-  "main": "pdf-img-convert.js",
-  "types": "pdf-img-convert.d.ts",
+  "main": "pdf-img-convert.ts",
+  "type": "module",
   "dependencies": {
     "canvas": "^2.11.2",
     "is-url": "^1.2.4",
@@ -11,15 +11,11 @@
     "pdfjs-dist": "^4.2.67"
   },
   "files": [
-    "pdf-img-convert.d.ts",
-    "pdf-img-convert.js"
+    "pdf-img-convert.ts"
   ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ol-th/pdf-img-convert.js.git"
+    "url": "git+https://github.com/Validient/pdf-img-convert.js.git"
   },
   "keywords": [
     "pdf",
@@ -31,7 +27,11 @@
   "author": "Oliver Thwaites",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ol-th/pdf-img-convert.js/issues"
+    "url": "https://github.com/Validient/pdf-img-convert.js/issues"
   },
-  "homepage": "https://github.com/ol-th/pdf-img-convert.js#readme"
+  "homepage": "https://github.com/Validient/pdf-img-convert.js#readme",
+  "devDependencies": {
+    "@types/is-url": "^1.2.32",
+    "@types/node": "^20.12.12"
+  }
 }
