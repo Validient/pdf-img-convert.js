@@ -1,3 +1,4 @@
+"use strict";
 /*
 
 Copyright (c) 2020 Ollie Thwaites
@@ -21,6 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -30,19 +54,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import isURL from 'is-url';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { createCanvas } from 'canvas';
-import * as fs from 'fs';
-import * as util from 'util';
-import * as path from 'path';
-import assert from 'assert';
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.convert = void 0;
+const is_url_1 = __importDefault(require("is-url"));
+const pdfjs = __importStar(require("pdfjs-dist/legacy/build/pdf.mjs"));
+const canvas_1 = require("canvas");
+const fs = __importStar(require("fs"));
+const util = __importStar(require("util"));
+const path = __importStar(require("path"));
+const assert_1 = __importDefault(require("assert"));
 const readFile = util.promisify(fs.readFile);
 class NodeCanvasFactory {
     // NodeCanvasFactory.prototype = {
     create(width, height) {
-        assert(width > 0 && height > 0, 'Invalid canvas size');
-        let canvas = createCanvas(width, height);
+        (0, assert_1.default)(width > 0 && height > 0, 'Invalid canvas size');
+        let canvas = (0, canvas_1.createCanvas)(width, height);
         let context = canvas.getContext('2d');
         return {
             canvas: canvas,
@@ -50,13 +79,13 @@ class NodeCanvasFactory {
         };
     }
     reset(canvasAndContext, width, height) {
-        assert(canvasAndContext.canvas, 'Canvas is not specified');
-        assert(width > 0 && height > 0, 'Invalid canvas size');
+        (0, assert_1.default)(canvasAndContext.canvas, 'Canvas is not specified');
+        (0, assert_1.default)(width > 0 && height > 0, 'Invalid canvas size');
         canvasAndContext.canvas.width = width;
         canvasAndContext.canvas.height = height;
     }
     destroy(canvasAndContext) {
-        assert(canvasAndContext.canvas, 'Canvas is not specified');
+        (0, assert_1.default)(canvasAndContext.canvas, 'Canvas is not specified');
         // Zeroing the width and height cause Firefox to release graphics
         // resources immediately, which can greatly reduce memory consumption.
         canvasAndContext.canvas.width = 0;
@@ -65,13 +94,13 @@ class NodeCanvasFactory {
         canvasAndContext.context = null;
     }
 }
-export function convert(pdf, conversion_config) {
+function convert(pdf, conversion_config) {
     return __awaiter(this, void 0, void 0, function* () {
         // Get the PDF in Uint8Array form
         let pdfData = pdf;
         if (typeof pdf === 'string') {
             // Support for URL input
-            if (isURL(pdf) || pdf.startsWith('moz-extension://') || pdf.startsWith('chrome-extension://') || pdf.startsWith('file://')) {
+            if ((0, is_url_1.default)(pdf) || pdf.startsWith('moz-extension://') || pdf.startsWith('chrome-extension://') || pdf.startsWith('file://')) {
                 const resp = yield fetch(pdf);
                 pdfData = new Uint8Array(yield resp.arrayBuffer());
             }
@@ -94,7 +123,7 @@ export function convert(pdf, conversion_config) {
         }
         // At this point, we want to convert the pdf data into a 2D array representing
         // the images (indexed like array[page][pixel])
-        let packagePath = path.dirname(import.meta.resolve('pdfjs-dist/package.json'));
+        let packagePath = path.dirname(require.resolve('pdfjs-dist/package.json'));
         let outputPages = [];
         let loadingTask = pdfjs.getDocument({
             data: pdfData,
@@ -136,6 +165,7 @@ export function convert(pdf, conversion_config) {
         return outputPages;
     });
 } // convert method
+exports.convert = convert;
 function doc_render(pdfDocument, pageNo, canvasFactory, conversion_config) {
     return __awaiter(this, void 0, void 0, function* () {
         // Page number sanity check

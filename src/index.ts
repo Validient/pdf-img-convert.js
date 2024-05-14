@@ -115,7 +115,7 @@ export async function convert(pdf: string | Buffer | Uint8Array, conversion_conf
   // At this point, we want to convert the pdf data into a 2D array representing
   // the images (indexed like array[page][pixel])
 
-  let packagePath = path.dirname(import.meta.resolve('pdfjs-dist/package.json'));
+  let packagePath = path.dirname(require.resolve('pdfjs-dist/package.json'));
 
   let outputPages: Array<Uint8Array | string> = [];
   let loadingTask = pdfjs.getDocument({

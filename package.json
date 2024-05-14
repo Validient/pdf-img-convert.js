@@ -4,7 +4,7 @@
   "description": "A simple module to convert PDF files into image buffers (without filesystem usage)",
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "canvas": "^2.11.2",
     "is-url": "^1.2.4",

@@ -1,4 +1,4 @@
-/// <reference types="node" resolution-mode="require"/>
+/// <reference types="node" />
 interface IConversionConfig {
     /** Number in px */
     width?: number;
