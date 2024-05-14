@@ -23,13 +23,12 @@ SOFTWARE.
 */
 
 import isURL from 'is-url';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { Canvas, createCanvas } from 'canvas';
 import * as fs from 'fs';
 import * as util from 'util';
 import * as path from 'path';
 import assert from 'assert';
-
+import { PDFDocumentProxy } from 'pdfjs-dist';
 const readFile = util.promisify(fs.readFile);
 
 interface CanvasAndContext {
@@ -118,6 +117,8 @@ export async function convert(pdf: string | Buffer | Uint8Array, conversion_conf
   let packagePath = path.dirname(require.resolve('pdfjs-dist/package.json'));
 
   let outputPages: Array<Uint8Array | string> = [];
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+
   let loadingTask = pdfjs.getDocument({
     data: pdfData,
     disableFontFace: true,
@@ -162,7 +163,7 @@ export async function convert(pdf: string | Buffer | Uint8Array, conversion_conf
 } // convert method
 
 async function doc_render(
-  pdfDocument: pdfjs.PDFDocumentProxy,
+  pdfDocument: PDFDocumentProxy,
   pageNo: number,
   canvasFactory: NodeCanvasFactory,
   conversion_config?: IConversionConfig
