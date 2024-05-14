@@ -1,4 +1,4 @@
-import * as pdf2img from '../pdf-img-convert.ts';
+import * as pdf2img from '../dist/pdf-img-convert';
 
 import * as fs from 'fs';
 

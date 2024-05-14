@@ -199,7 +199,7 @@ async function doc_render(
     canvasFactory: canvasFactory,
   };
 
-  let renderTask = await page.render(renderContext).promise;
+  await page.render(renderContext).promise;
 
   // Convert the canvas to an image buffer.
   let image = canvasAndContext.canvas.toBuffer();
