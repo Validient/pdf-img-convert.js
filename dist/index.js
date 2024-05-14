@@ -51,7 +51,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convert = void 0;
 const is_url_1 = __importDefault(require("is-url"));
-// import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 const canvas_1 = require("canvas");
 const fs = __importStar(require("fs"));
 const util = __importStar(require("util"));
@@ -115,7 +114,7 @@ async function convert(pdf, conversion_config) {
     // the images (indexed like array[page][pixel])
     let packagePath = path.dirname(require.resolve('pdfjs-dist/package.json'));
     let outputPages = [];
-    const pdfjs = await Promise.resolve().then(() => __importStar(require('pdfjs-dist/legacy/build/pdf.mjs')));
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
     let loadingTask = pdfjs.getDocument({
         data: pdfData,
         disableFontFace: true,
